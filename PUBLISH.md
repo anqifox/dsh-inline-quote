@@ -1,6 +1,6 @@
 # Publishing `dsh-inline-quote`
 
-Status: pre-release checklist. The package lives in this directory; the `desktop` profile links to it.
+Status: **published** as `dsh-inline-quote@0.1.0` on 2026-10-26. The package lives in this directory; the `desktop` profile links to it.
 
 ## Decisions
 
