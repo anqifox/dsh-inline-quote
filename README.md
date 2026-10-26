@@ -7,6 +7,12 @@ A small DSH Web Client plugin: select text in a conversation, click **引用 / Q
 - Click a quote chip to open a readable preview. Code previews preserve line breaks and indentation and can be copied. Sent-message quote chips open a read-only preview.
 - One composer quote chip can be removed with Backspace/Delete at its edge, or through the preview's delete button; Ctrl+Z restores it. Sent-message quotes are history and are intentionally read-only.
 
+## Screenshots
+
+![Quote preview — dark theme](https://raw.githubusercontent.com/anqifox/dsh-inline-quote/main/screenshots/quote-preview-dark.png)
+
+![Quote preview — light theme](https://raw.githubusercontent.com/anqifox/dsh-inline-quote/main/screenshots/quote-preview-light.png)
+
 ## Status
 
 Verified against DeepSeek Harness `0.2.1-rc.3` Web Client. This plugin is maintained **as-is, without a support SLA**: issues and pull requests are welcome but may not be answered promptly. It targets DSH-internal contracts that can change between releases; if DSH ships native quote support, this plugin will be deprecated rather than ported.
