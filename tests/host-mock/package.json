@@ -1,0 +1,19 @@
+{
+  "name": "@local/inline-quote-test-host",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Host-only mock LLM adapter for inline-quote acceptance tests",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

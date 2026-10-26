@@ -1,0 +1,3 @@
+- insert:
+    - id: inline-quote-test-host
+      name: '@local/inline-quote-test-host'
