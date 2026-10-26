@@ -26,14 +26,14 @@
     "cordis"
   ],
   "license": "MIT",
-  "author": "Littlefox-owo",
+  "author": "anqifox",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Littlefox-owo/dsh-inline-quote.git"
+    "url": "git+https://github.com/anqifox/dsh-inline-quote.git"
   },
-  "homepage": "https://github.com/Littlefox-owo/dsh-inline-quote#readme",
+  "homepage": "https://github.com/anqifox/dsh-inline-quote#readme",
   "bugs": {
-    "url": "https://github.com/Littlefox-owo/dsh-inline-quote/issues"
+    "url": "https://github.com/anqifox/dsh-inline-quote/issues"
   },
   "engines": {
     "node": ">=18"

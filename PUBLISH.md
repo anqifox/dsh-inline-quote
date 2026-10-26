@@ -30,7 +30,7 @@ The npm `files` list already ships only the runtime files: `index.js`, `client.j
    git init -b main
    git add .
    git commit -m "feat: inline quote reference chips for DSH"
-   git remote add origin https://github.com/<YOUR-GITHUB-USER>/dsh-inline-quote.git
+   git remote add origin https://github.com/anqifox/dsh-inline-quote.git
    git push -u origin main
    ```
 
