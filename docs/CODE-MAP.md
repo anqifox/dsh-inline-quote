@@ -1,8 +1,8 @@
 # 开发导航｜实际代码结构与调用链
 
-> **对象：维护者和接手项目的 AI。** 这不是插件介绍、需求清单或进度台账。需要向用户介绍插件，请回到 [README](../README.md)；需要处理 v0.2，直接看 [Issue #2](../issues/2) 和 [PR #5](../pull/5)。
+> **对象：维护者和接手项目的 AI。** 这不是插件介绍、需求清单或进度台账。需要向用户介绍插件，请回到 [README](../README.md)；需要处理 v0.2，直接看 [Issue #2](https://github.com/anqifox/dsh-inline-quote/issues/2) 和 [PR #5](https://github.com/anqifox/dsh-inline-quote/pull/5)。
 >
-> **源码基线：** 已发布功能的 `main` 版本 [`0206661`](https://github.com/anqifox/dsh-inline-quote/tree/0206661636158edf6ce49f1f61159f558bf4afff)。下方**固定行号链接**指向此提交，而不是随时移动的 `main`；v0.2 原型见 [`6cf14ff`](https://github.com/anqifox/dsh-inline-quote/tree/6cf14ff2ae1e2b9a580ae6382820ba2aedb4740b) 与 [diff](../pull/5/files)。
+> **源码基线：** 已发布功能的 `main` 版本 [`0206661`](https://github.com/anqifox/dsh-inline-quote/tree/0206661636158edf6ce49f1f61159f558bf4afff)。下方**固定行号链接**指向此提交，而不是随时移动的 `main`；v0.2 原型见 [`6cf14ff`](https://github.com/anqifox/dsh-inline-quote/tree/6cf14ff2ae1e2b9a580ae6382820ba2aedb4740b) 与 [diff](https://github.com/anqifox/dsh-inline-quote/pull/5/files)。
 
 ## 1. 骨架：先识别真正的入口
 
@@ -86,8 +86,8 @@ const applied = actx.bail(actx, 'slash/input-insert-reference', { reference, spa
 
 ## 5. 怎么用这张图定位问题
 
-- **根本看不到「引用」：** 从 `readSelection` → `QuoteSelectionLayer` 追踪。真实轨迹原型：[PR #5](../pull/5)；目标：[Issue #2](../issues/2)。
+- **根本看不到「引用」：** 从 `readSelection` → `QuoteSelectionLayer` 追踪。真实轨迹原型：[PR #5](https://github.com/anqifox/dsh-inline-quote/pull/5)；目标：[Issue #2](https://github.com/anqifox/dsh-inline-quote/issues/2)。
 - **按钮有了，但插不进 Chip：** 沿事件 `dsh-inline-quote:insert` → `QuoteComposerBridge.insert` → DSH 接口追踪；先观察浏览器实际事件和返回值，不先造更多测试框架。
-- **Chip 有了但文字缺失：** 回到 `selectedText` 的 DOM 提取；已记录的链接文字问题：[Issue #3](../issues/3)。如果输入正确、发送错误，再看 `quoteSource.codec.serialize`。
+- **Chip 有了但文字缺失：** 回到 `selectedText` 的 DOM 提取；已记录的链接文字问题：[Issue #3](https://github.com/anqifox/dsh-inline-quote/issues/3)。如果输入正确、发送错误，再看 `quoteSource.codec.serialize`。
 
 **证据规则：** 上述链接和图说明的是当前源码结构；不等于真实运行验证。直接在 GitHub 页面查看固定源码、提交 diff 和 Issue 的实验结果。仅在**调用链真的改变**时维护本图；任务状态留在 Issue/PR，不在这里重复抄一份。
