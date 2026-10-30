@@ -2,10 +2,6 @@ name: Generate Repo Visualizer Diagram
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths-ignore:
-      - diagram.svg
 
 permissions:
   contents: write
