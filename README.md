@@ -32,8 +32,6 @@ Replace `<profile>` with your DSH profile name. Restart or reload the relevant D
 2. Click **引用 / Quote** beside the selection. / 点击浮现的「引用」。
 3. Continue typing around the inserted chip; click it to preview or remove it. / 在引用标签前后继续输入，点击标签查看原文。
 
-![Quote preview in light mode](screenshots/quote-preview-light.png)
-
 ## Compatibility & limitations / 兼容性与限制
 
 - Developed and tested against **DSH `0.2.1-rc.3` Web Client**. Other DSH versions have not been verified.
@@ -43,8 +41,8 @@ Replace `<profile>` with your DSH profile name. Restart or reload the relevant D
 
 ## Development / 开发
 
-Source: [`client.js`](client.js) · [Changes](CHANGELOG.md) · [Issues](../../issues) · [Open pull requests](../../pulls).
+Source: [`client.js`](client.js) · [Changes](CHANGELOG.md) · [Issues](https://github.com/anqifox/dsh-inline-quote/issues) · [Pull requests](https://github.com/anqifox/dsh-inline-quote/pulls).
 
-The next feature being explored is selecting and quoting text from the Trajectory view. See [the prototype PR](../../pull/5); it is **not part of the released version**.
+The next feature being explored is selecting and quoting text from the Trajectory view. See [the prototype PR](https://github.com/anqifox/dsh-inline-quote/pull/5); it is **not part of the released version**.
 
 MIT License — see [LICENSE](LICENSE).
