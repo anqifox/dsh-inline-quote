@@ -41,6 +41,8 @@ Replace `<profile>` with your DSH profile name. Restart or reload the relevant D
 
 ## Development / 开发
 
+For maintainers and AI contributors: **[Code map — architecture, call flow and fixed source links](docs/CODE-MAP.md)**.
+
 Source: [`client.js`](client.js) · [Changes](CHANGELOG.md) · [Issues](https://github.com/anqifox/dsh-inline-quote/issues) · [Pull requests](https://github.com/anqifox/dsh-inline-quote/pulls).
 
 The next feature being explored is selecting and quoting text from the Trajectory view. See [the prototype PR](https://github.com/anqifox/dsh-inline-quote/pull/5); it is **not part of the released version**.
