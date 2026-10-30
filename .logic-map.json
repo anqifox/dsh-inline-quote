@@ -1,0 +1,109 @@
+{
+  "project": "DSH 内联引用",
+  "nodes": [
+    {
+      "id": "chat",
+      "name": "对话选区",
+      "status": "已发布",
+      "purpose": "在已完成的聊天消息中选取文字。",
+      "known": "README 确认 0.1.0 支持单条消息选区。",
+      "unknown": "本轮未重新进行真实 DSH 测试。",
+      "next": "仅在版本兼容问题出现时核查。",
+      "evidence": [
+        "https://github.com/anqifox/dsh-inline-quote/blob/main/README.md"
+      ],
+      "changes": []
+    },
+    {
+      "id": "trajectory",
+      "name": "轨迹选区",
+      "status": "已编码，待验证",
+      "purpose": "把轨迹视图的文字接入引用链路。",
+      "known": "PR #5 尚处于开放草案，未合并发布。",
+      "unknown": "真实轨迹选区是否正确触发引用并保持原文。",
+      "next": "在真实 DSH 轨迹执行一次引用闭环。",
+      "evidence": [
+        "https://github.com/anqifox/dsh-inline-quote/pull/5"
+      ],
+      "changes": [
+        "v0.2 已提交轨迹选区试验代码，尚未验收。"
+      ]
+    },
+    {
+      "id": "extract",
+      "name": "原文提取",
+      "status": "已实现，有已知缺陷",
+      "purpose": "提取所选内容并保留可见文本和格式。",
+      "known": "Issue #3 记录了按钮形式正文链接文字丢失的问题。",
+      "unknown": "表格、列表、复杂链接中的更多保真边界。",
+      "next": "修复正文按钮文字遗漏后验收真实引用。",
+      "evidence": [
+        "https://github.com/anqifox/dsh-inline-quote/issues/3"
+      ],
+      "changes": [
+        "发现并记录部分链接正文丢失。"
+      ]
+    },
+    {
+      "id": "insert",
+      "name": "插入引用",
+      "status": "已有实现，部分未验证",
+      "purpose": "将引用插入当前会话输入框。",
+      "known": "历史测试覆盖会话路由、持久化和失败回滚。",
+      "unknown": "两个真实输入桥同时挂载时的路由。",
+      "next": "出现双输入框场景时补验收。",
+      "evidence": [
+        "https://github.com/anqifox/dsh-inline-quote/blob/main/TEST-RESULTS.md"
+      ],
+      "changes": []
+    },
+    {
+      "id": "preview",
+      "name": "预览与撤销",
+      "status": "已发布",
+      "purpose": "预览原文、删除草稿引用并可撤销。",
+      "known": "README 与测试记录存在相应功能证据。",
+      "unknown": "本轮没有重新进行交互回归。",
+      "next": "功能修改时验证预览与删除。",
+      "evidence": [
+        "https://github.com/anqifox/dsh-inline-quote/blob/main/README.md"
+      ],
+      "changes": []
+    },
+    {
+      "id": "send",
+      "name": "发送引用",
+      "status": "Host 模拟验证",
+      "purpose": "将引用标签展开为带 DSH_QUOTE 边界的完整原文。",
+      "known": "2026-10-25 Host 模拟测试记录了完整引用请求。",
+      "unknown": "本轮未在正式生产模型端验证。",
+      "next": "发送协议变更后检查 Host 侧内容。",
+      "evidence": [
+        "https://github.com/anqifox/dsh-inline-quote/blob/main/TEST-RESULTS.md"
+      ],
+      "changes": []
+    }
+  ],
+  "links": [
+    {
+      "from": "chat",
+      "to": "extract"
+    },
+    {
+      "from": "trajectory",
+      "to": "extract"
+    },
+    {
+      "from": "extract",
+      "to": "insert"
+    },
+    {
+      "from": "insert",
+      "to": "preview"
+    },
+    {
+      "from": "preview",
+      "to": "send"
+    }
+  ]
+}
