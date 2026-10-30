@@ -53,4 +53,4 @@ GitHub Actions → **Project Map** → run → `validate-render`:
 
 **Limitations:** a resolved code anchor confirms the text exists at that location, not that a causal link is semantically proven. Full Git history is required to validate historic commit references. Cross-repository calling was designed into the workflow, but requires a separate live call to claim end-to-end portability. Graph generation is not an automatic full codebase discovery system.
 
-The MVP currently runs on a feature branch until reviewed; its historical PR run and artifacts provide acceptance evidence.
+The first acceptance run and its artifact are linked from the project-map pull request.
