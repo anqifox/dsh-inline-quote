@@ -6,6 +6,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const tests = [
   'inline-quote-health.mjs',
   'inline-quote-selection-test.mjs',
+  'inline-quote-trajectory-selection-test.mjs',
   'inline-quote-code-test.mjs',
   'inline-quote-inserted-space-test.mjs',
   'inline-quote-existing-space-test.mjs',
