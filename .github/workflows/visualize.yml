@@ -1,27 +1,24 @@
 name: Generate Repo Visualizer Diagram
 
 on:
-  workflow_dispatch: # 支持在 GitHub 网页上一键手动触发
+  workflow_dispatch:
   push:
-    branches: [ main, master ] # 每次更新代码时自动重新画图
+    branches: [main]
+    paths-ignore:
+      - diagram.svg
+
+permissions:
+  contents: write
 
 jobs:
   visualize:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Generate diagram
-        uses: githubnext/repo-visualizer@main
+      - name: Generate repository diagram
+        uses: githubocto/repo-visualizer@0.9.1
         with:
-          output_file: "diagram.svg" # 生成的图片文件名
-          excluded_paths: "node_modules, .git, tests" # 自动过滤冗余节点
-
-      - name: Commit and push SVG
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add diagram.svg
-          git commit -m "docs: update repo visualization diagram" || exit 0
-          git push
+          output_file: diagram.svg
+          commit_message: "docs: update repository visualization [skip ci]"
