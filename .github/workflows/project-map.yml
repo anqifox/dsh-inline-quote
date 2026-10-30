@@ -27,15 +27,15 @@ permissions:
 
 jobs:
   validate-render:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out calling project and full commit history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Check out shared renderer (always from tool repository)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: anqifox/dsh-inline-quote
           ref: ${{ github.repository == 'anqifox/dsh-inline-quote' && github.event_name == 'pull_request' && github.head_ref || inputs.engine_ref || 'main' }}
@@ -77,7 +77,7 @@ jobs:
 
       - name: Publish inspectable result as an Actions artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: project-map-evidence
           path: project-map-output/
