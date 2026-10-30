@@ -8,7 +8,7 @@ These are the real Client scripts used in the isolated rc.3 probe. They are not 
 - `host-mock/` — host-only mock LLM adapter (`inline-quote-mock` / `mock-1`) used to create real Host-persisted turns and log actual Host requests.
 - `e2e/cdp.mjs` — minimal Chrome DevTools Protocol client. It imports the `ws` package; install it with `npm install ws` in `tests/e2e` before running.
 - `e2e/inline-quote-*.mjs` — test steps.
-- `e2e/run-regressions.mjs` — 21-test runner; one test exits 2 and is reported UNVERIFIED.
+- `e2e/run-regressions.mjs` — 22-test runner after adding the v0.2 synthetic Trajectory selection case; one pre-existing test exits 2 and is reported UNVERIFIED. The new test is not yet run.
 
 ## Environment
 
@@ -49,7 +49,8 @@ The Host mock writes actual provider request bodies to `tmp/inline-quote-host-re
 
 1. `inline-quote-smoke.mjs` — plugin/source/codec present.
 2. `inline-quote-selection-test.mjs` — synthetic completed-row selection, button, real chip preview.
-3. `inline-quote-send-test.mjs` — two inline quotes + text; mock receiver.
+3. `inline-quote-trajectory-selection-test.mjs` — synthetic multi-record Trajectory view under a live Session + real native composer insertion. Does NOT prove the real Trajectory component, Host delivery or fidelity of complex tables.
+4. `inline-quote-send-test.mjs` — two inline quotes + text; mock receiver.
 4. `inline-quote-delete-clean.mjs` — preview delete + Ctrl+Z.
 5. `inline-quote-existing-space-test.mjs` / `inline-quote-inserted-space-test.mjs` — separator ownership.
 6. `inline-quote-caret-test.mjs` — insertion at the prior composer caret.
@@ -69,7 +70,7 @@ The Host mock writes actual provider request bodies to `tmp/inline-quote-host-re
 20. `inline-quote-visual-theme-test.mjs` — light/dark opaque preview screenshots.
 21. `inline-quote-routing-test.mjs` — synthetic negative target check only; exits 2 UNVERIFIED.
 
-`run-regressions.mjs` runs all 21 in this order. Some scripts depend on state left by earlier scripts (notably the persisted `quote-probe-persist-expected` localStorage key used by the cross-session test).
+`run-regressions.mjs` runs all 22 in this order, including the synthetic Trajectory selection case. Results from 0.1.x's historical 21 tests cannot be treated as v0.2 results without a fresh run. Some scripts depend on state left by earlier scripts (notably the persisted `quote-probe-persist-expected` localStorage key used by the cross-session test).
 
 ## Notes
 
