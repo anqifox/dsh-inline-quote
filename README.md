@@ -2,6 +2,8 @@
 
 A small DSH Web Client plugin: select text in a conversation, click **引用 / Quote**, and the selection becomes a native composer reference chip. Multiple quotes may be interleaved with normal text and sent as one ordinary message.
 
+**Development / 研发进度：** [v0.2 项目关系图、已知证据与待验收事项（Issue #1）](https://github.com/anqifox/dsh-inline-quote/issues/1)。现有 v0.1.x 功能与发布版本不变。
+
 - No new session, subagent, side conversation, quote manager, or sidebar.
 - The native DSH composer behavior is left intact; quote chips are ordinary `ReferenceChipNode`s with `source: 'quote'`.
 - Click a quote chip to open a readable preview. Code previews preserve line breaks and indentation and can be copied. Sent-message quote chips open a read-only preview.
