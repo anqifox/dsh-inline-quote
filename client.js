@@ -18,9 +18,7 @@ window.__ModuleLoader__.load({
       'preview.lines': '行',
       'preview.source': '来自第 {turn} 轮对话',
       'error.insert': '无法插入引用，请重新选择后再试。',
-      'error.tooLarge': '引用过长，无法安全保存草稿（单条引用数据上限约 4 MB）。请缩短后重试。',
-      'error.draftCapacity': '草稿容量不足，无法安全保存这条引用；原有草稿未被修改。请先清理部分引用或草稿内容后再试。',
-      'error.draftUnsafe': '无法安全保存或撤回这条引用，请手动删除该引用后重试。',
+      'error.tooLarge': '引用过长，请缩短选区后重试（单条编码数据上限约 512 KB）。',
       'error.decode': '引用内容无法读取。',
       'error.copy': '复制失败。',
     }
@@ -34,9 +32,7 @@ window.__ModuleLoader__.load({
       'preview.lines': 'lines',
       'preview.source': 'From turn {turn}',
       'error.insert': 'Could not insert the quote. Select it again and retry.',
-      'error.tooLarge': 'This quote is too large to save safely in the draft (about 4 MB of quote data per item). Shorten it and retry.',
-      'error.draftCapacity': 'The draft does not have enough storage for another quote. The existing draft was left unchanged; remove a quote or draft content and retry.',
-      'error.draftUnsafe': 'The quote could not be saved or rolled back safely. Delete that quote manually and retry.',
+      'error.tooLarge': 'This quote is too large. Select a shorter excerpt (512 KB encoded limit).',
       'error.decode': 'The quote could not be read.',
       'error.copy': 'Copy failed.',
     }
@@ -223,8 +219,8 @@ window.__ModuleLoader__.load({
     }
 
     const tokenFor = (id) => `[[quote:${id}]]`
-    /** Measured rc.3 boundary: ~4.0 MB of ref data fits; ~5.3 MB silently fails localStorage. */
-    const MAX_REF_LENGTH = 4_200_000
+    // Ordinary excerpts only: avoid putting multi-megabyte data in DSH drafts.
+    const MAX_REF_LENGTH = 512_000
 
     const clipboardIndexOfDetect = (input, detectOffset) => {
       let shift = 0
@@ -248,8 +244,6 @@ window.__ModuleLoader__.load({
 
     const bridgeRegistry = new Map()
     const insertionRevisions = new Map()
-    const DRAFT_STORAGE_PREFIX = 'dsh.conversation.'
-    const draftStorageKey = (sessionId) => DRAFT_STORAGE_PREFIX + sessionId
     const acceptTarget = (detail, bridgeId, sessionId) => {
       if (typeof detail?.composerId === 'string' && detail.composerId.length > 0) {
         return detail.composerId === bridgeId
@@ -261,15 +255,6 @@ window.__ModuleLoader__.load({
       // composer bridge is mounted. The selection layer always supplies both
       // target fields in normal use.
       return bridgeRegistry.size === 1
-    }
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-    const storedDraftHasRef = (sessionId, ref) => {
-      try {
-        const raw = window.localStorage.getItem(draftStorageKey(sessionId))
-        return typeof raw === 'string' && raw.includes(ref)
-      } catch {
-        return false
-      }
     }
 
     const quoteSource = {
@@ -700,183 +685,89 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         const bridgeId = bridgeIdRef.current
         bridgeRegistry.set(bridgeId, { sessionId: sessionRef.current })
-        const marker = markerRef.current
-        const seat = marker?.closest('[data-composer-seat]')
-        const previousComposer = seat?.getAttribute('data-inline-quote-composer')
-        if (seat) seat.setAttribute('data-inline-quote-composer', bridgeId)
+        const seat = markerRef.current?.closest('[data-composer-seat]')
+        const previous = seat?.getAttribute('data-inline-quote-composer')
+        seat?.setAttribute('data-inline-quote-composer', bridgeId)
 
-        const targetMatches = (detail) => acceptTarget(detail, bridgeId, sessionRef.current)
-        const currentOccurrence = (reference) => {
-          const current = inputRef.current
-          const index = current.occurrences.findIndex((occurrence) => occurrence.source === 'quote' && occurrence.ref === reference.ref)
-          return index < 0 ? null : { current, index, occurrence: current.occurrences[index] }
-        }
-        const deleteOccurrence = (reference) => {
-          const found = currentOccurrence(reference)
-          if (found === null) return false
-          const { current, index, occurrence } = found
-          const shrink = current.occurrences.slice(0, index).reduce((sum, item) => sum + item.clipboardText.length - 1, 0)
-          const start = occurrence.offset - shrink
-          let end = start + 1
-          let separator = 'unknown'
-          try {
-            separator = decodeRef(occurrence.ref).separator ?? 'unknown'
-          } catch {}
-          const id = (() => {
-            try { return decodeRef(occurrence.ref).id } catch { return undefined }
-          })()
-          // The separator was inserted by us only when the draft revision is
-          // still the one captured immediately after insertion. Any later
-          // typing/replacement makes it user-owned; remove the chip only.
-          const revisionMatches = id !== undefined && insertionRevisions.get(id) === current.draftRev
-          if (separator === 'inserted' && revisionMatches && current.draft[occurrence.offset + occurrence.length] === ' ') end += 1
-          const applied = actionsRef.current.insertText('', { start, end, draftRev: current.draftRev })
-          if (applied && id !== undefined) insertionRevisions.delete(id)
-          return applied
-        }
-        const persistAndVerify = async (reference) => {
-          for (let attempt = 0; attempt < 30; attempt += 1) {
-            // A send or manual delete may remove the occurrence while this loop
-            // is pending. Treat that as consumed, never as a capacity failure.
-            if (currentOccurrence(reference) === null) return 'gone'
-            try { actionsRef.current.persistDraft() } catch {}
-            if (storedDraftHasRef(sessionRef.current, reference.ref)) return 'persisted'
-            await sleep(attempt < 5 ? 20 : 40)
-          }
-          return currentOccurrence(reference) === null ? 'gone' : 'failed'
-        }
-        const rollback = async (reference) => {
-          for (let attempt = 0; attempt < 12; attempt += 1) {
-            if (currentOccurrence(reference) === null) return 'gone'
-            // No forced revision bypass: only the chip is removed; the
-            // inserted separator is removed solely when its revision still
-            // matches, so later user text and replaced spaces are untouched.
-            if (deleteOccurrence(reference)) {
-              try { actionsRef.current.persistDraft() } catch {}
-              return 'removed'
-            }
-            await sleep(25)
-          }
-          return currentOccurrence(reference) === null ? 'gone' : 'failed'
-        }
+        const matches = (detail) => acceptTarget(detail, bridgeId, sessionRef.current)
+        const error = (key, fallback) => dispatchError(tr(translateRef.current, key, fallback))
 
-        const insert = async (detail) => {
-          if (!targetMatches(detail)) return
+        const insert = (detail, retry = true) => {
+          if (!matches(detail)) return
           const actx = rootCtx?.sessions?.scope(sessionRef.current)
-          if (!actx) {
-            dispatchError(tr(translateRef.current, 'error.insert', '无法插入引用，请重新选择后再试。'))
-            return
+          if (!actx) return error('error.insert', '无法插入引用，请重新选择后再试。')
+
+          const current = inputRef.current
+          const caret = actionsRef.current.captureInsertion()
+          const span = { start: caret.end, end: caret.end, draftRev: caret.draftRev }
+          const separator = tailCharAt(current, span.end) === ' ' ? 'existing' : 'inserted'
+          const payload = buildPayload({
+            ...detail, sessionId: sessionRef.current, composerId: bridgeId,
+          }, translateRef.current, separator)
+          const reference = {
+            source: 'quote',
+            ref: encodeRef(payload),
+            label: payload.label,
+            clipboardText: tokenFor(payload.id),
           }
-          const attempt = (retry) => {
-            const current = inputRef.current
-            const caret = actionsRef.current.captureInsertion()
-            const span = { start: caret.end, end: caret.end, draftRev: caret.draftRev }
-            const separator = tailCharAt(current, span.end) === ' ' ? 'existing' : 'inserted'
-            const payload = buildPayload({
-              ...detail,
-              sessionId: sessionRef.current,
-              composerId: bridgeId,
-            }, translateRef.current, separator)
-            const reference = {
-              source: 'quote',
-              ref: encodeRef(payload),
-              label: payload.label,
-              clipboardText: tokenFor(payload.id),
-            }
-            if (reference.ref.length > MAX_REF_LENGTH) {
-              dispatchError(tr(translateRef.current, 'error.tooLarge', '引用过长，无法安全保存草稿。请缩短后重试。'))
-              return
-            }
-            const applied = actx.bail(actx, 'slash/input-insert-reference', { reference, span })
-            if (applied) {
-              // Capture ownership synchronously, before any user edit can
-              // replace the separator. Never refresh this revision later:
-              // persistence is asynchronous and must not claim edits as ours.
-              try {
-                const revision = actionsRef.current.captureInsertion().draftRev
-                if (Number.isSafeInteger(revision)) insertionRevisions.set(payload.id, revision)
-              } catch {}
-              void (async () => {
-                let occurrence = null
-                for (let check = 0; check < 20; check += 1) {
-                  occurrence = currentOccurrence(reference)
-                  if (occurrence !== null) break
-                  await sleep(20)
-                }
-                if (occurrence === null) {
-                  // The chip was sent or manually removed while this check was
-                  // pending. Do not rollback or report a false failure.
-                  insertionRevisions.delete(payload.id)
-                  return
-                }
-                const persisted = await persistAndVerify(reference)
-                if (persisted === 'gone') {
-                  insertionRevisions.delete(payload.id)
-                  return
-                }
-                if (persisted === 'failed') {
-                  const rollbackStatus = await rollback(reference)
-                  insertionRevisions.delete(payload.id)
-                  if (rollbackStatus === 'removed') {
-                    dispatchError(tr(translateRef.current, 'error.draftCapacity', '草稿容量不足，无法安全保存这条引用；原有草稿未被修改。'))
-                  } else if (rollbackStatus === 'failed') {
-                    dispatchError(tr(translateRef.current, 'error.draftUnsafe', '无法安全保存或撤回这条引用，请手动删除该引用后重试。'))
-                  }
-                }
-              })()
-              return
-            }
-            if (retry) {
-              window.setTimeout(() => attempt(false), 0)
-              return
-            }
-            dispatchError(tr(translateRef.current, 'error.insert', '无法插入引用，请重新选择后再试。'))
+          if (reference.ref.length > MAX_REF_LENGTH) {
+            return error('error.tooLarge', '引用过长，请缩短选区后重试。')
           }
-          attempt(true)
+          if (!actx.bail(actx, 'slash/input-insert-reference', { reference, span })) {
+            if (retry) return window.setTimeout(() => insert(detail, false), 0)
+            return error('error.insert', '无法插入引用，请重新选择后再试。')
+          }
+
+          // Keep the existing draft space cleanup only for an untouched insert.
+          try {
+            const revision = actionsRef.current.captureInsertion().draftRev
+            if (Number.isSafeInteger(revision)) insertionRevisions.set(payload.id, revision)
+          } catch {}
+          // Let React apply the insertion before persisting the changed draft.
+          window.setTimeout(() => {
+            const stillPresent = inputRef.current.occurrences.some(
+              item => item.source === 'quote' && item.ref === reference.ref,
+            )
+            if (stillPresent) {
+              try { actionsRef.current.persistDraft() } catch {
+                error('error.insert', '引用已插入，但草稿保存失败。')
+              }
+            }
+          }, 0)
         }
 
         const remove = (detail) => {
           const id = detail?.id
-          if (typeof id !== 'string' || id.length === 0) return
-          const ownsId = inputRef.current.occurrences.some((occurrence) => {
-            if (occurrence.source !== 'quote') return false
-            try {
-              return decodeRef(occurrence.ref).id === id
-            } catch {
-              return false
-            }
+          if (typeof id !== 'string') return
+          const current = inputRef.current
+          const index = current.occurrences.findIndex((item) => {
+            if (item.source !== 'quote') return false
+            try { return decodeRef(item.ref).id === id } catch { return false }
           })
-          const staleTargetFallback = detail?.sessionId === sessionRef.current && ownsId
-          if (!targetMatches(detail) && !staleTargetFallback) return
-          const actx = rootCtx?.sessions?.scope(sessionRef.current)
-          if (!actx) return
-          const attempt = (retry) => {
-            const current = inputRef.current
-            const index = current.occurrences.findIndex((occurrence) => {
-              if (occurrence.source !== 'quote') return false
-              try {
-                return decodeRef(occurrence.ref).id === id
-              } catch {
-                return false
-              }
-            })
-            if (index < 0) {
-              insertionRevisions.delete(id)
-              return
-            }
-            const reference = { ref: current.occurrences[index].ref }
-            const applied = deleteOccurrence(reference)
-            if (applied) return
-            if (retry) {
-              window.setTimeout(() => attempt(false), 0)
-              return
-            }
-            dispatchError(tr(translateRef.current, 'error.insert', '无法插入引用，请重新选择后再试。'))
-          }
-          attempt(true)
+          if (index < 0) return
+          // A saved draft may contain the previous composer mount id.
+          if (!matches(detail) && detail?.sessionId !== sessionRef.current) return
+          const item = current.occurrences[index]
+          const shift = current.occurrences.slice(0, index).reduce(
+            (sum, entry) => sum + entry.clipboardText.length - 1, 0,
+          )
+          const start = item.offset - shift
+          let end = start + 1
+          try {
+            const payload = decodeRef(item.ref)
+            if (payload.separator === 'inserted'
+              && insertionRevisions.get(id) === current.draftRev
+              && current.draft[item.offset + item.length] === ' ') end += 1
+          } catch {}
+          if (actionsRef.current.insertText('', {
+            start, end, draftRev: current.draftRev,
+          })) {
+            insertionRevisions.delete(id)
+            try { actionsRef.current.persistDraft() } catch {}
+          } else error('error.insert', '无法删除引用，请重试。')
         }
 
-        const onInsert = (event) => { void insert(event.detail) }
+        const onInsert = (event) => insert(event.detail)
         const onDelete = (event) => remove(event.detail)
         window.addEventListener('dsh-inline-quote:insert', onInsert)
         window.addEventListener('dsh-inline-quote:delete', onDelete)
@@ -884,11 +775,9 @@ window.__ModuleLoader__.load({
           window.removeEventListener('dsh-inline-quote:insert', onInsert)
           window.removeEventListener('dsh-inline-quote:delete', onDelete)
           bridgeRegistry.delete(bridgeId)
-          if (seat) {
-            if (seat.getAttribute('data-inline-quote-composer') === bridgeId) {
-              if (previousComposer === null) seat.removeAttribute('data-inline-quote-composer')
-              else seat.setAttribute('data-inline-quote-composer', previousComposer)
-            }
+          if (seat?.getAttribute('data-inline-quote-composer') === bridgeId) {
+            if (previous === null) seat.removeAttribute('data-inline-quote-composer')
+            else seat.setAttribute('data-inline-quote-composer', previous)
           }
         }
       }, [])
