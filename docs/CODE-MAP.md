@@ -90,4 +90,11 @@ const applied = actx.bail(actx, 'slash/input-insert-reference', { reference, spa
 - **按钮有了，但插不进 Chip：** 沿事件 `dsh-inline-quote:insert` → `QuoteComposerBridge.insert` → DSH 接口追踪；先观察浏览器实际事件和返回值，不先造更多测试框架。
 - **Chip 有了但文字缺失：** 回到 `selectedText` 的 DOM 提取；已记录的链接文字问题：[Issue #3](https://github.com/anqifox/dsh-inline-quote/issues/3)。如果输入正确、发送错误，再看 `quoteSource.codec.serialize`。
 
+## 6. 在哪里用 GitHub / IDE / 动态调试
+
+- **GitHub：** 先从本页固定行号链接打开真正的函数；点 PR 的 **Files changed** 看变化，不必遍历整个仓库。网页版的符号跳转取决于语言索引，不能保证解析 `__ModuleLoader__` 中所有动态注册关系。
+- **VS Code：** 在 `client.js` 搜索 `readSelection`、`dsh-inline-quote:insert`、`slash/input-insert-reference` 即可跟踪关键链路；**Call Hierarchy** 能否完整识别动态事件需要实际试验，不能把缺少引用误认为没有调用。
+- **浏览器调试：** 在真实 DSH Web Client 的 DevTools Sources 中给 `readSelection` 和 `QuoteComposerBridge` 的 `insert` 设置断点，亲自划词、点击引用，查看选区、`sessionId`、`composerId`、`actx.bail(...)` 的实际返回。**这个运行验证尚未执行**。
+- **Dependency Graph：** 适合核对 npm 上游依赖，**不能**展示本插件单文件内的函数调用与事件关系；无需为此安装额外依赖可视化软件。
+
 **证据规则：** 上述链接和图说明的是当前源码结构；不等于真实运行验证。直接在 GitHub 页面查看固定源码、提交 diff 和 Issue 的实验结果。仅在**调用链真的改变**时维护本图；任务状态留在 Issue/PR，不在这里重复抄一份。
