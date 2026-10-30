@@ -128,26 +128,41 @@ window.__ModuleLoader__.load({
 
     const readSelection = () => {
       const selection = window.getSelection()
-      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null
+      if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return null
       const range = selection.getRangeAt(0)
       const startElement = elementOf(range.startContainer)
       const endElement = elementOf(range.endContainer)
       if (!startElement || !endElement) return null
 
-      if (startElement.closest('button, input, textarea, select, [contenteditable="true"], [data-composer-seat]')) return null
-      if (startElement.closest('[aria-hidden="true"]')) return null
+      // Endpoints must be actual reading content, not composer or control UI.
+      // Excluding both endpoints also prevents cross-panel drags into the composer.
+      const controls = 'button, input, textarea, select, [contenteditable="true"], [data-composer-seat]'
+      if (startElement.closest(controls) || endElement.closest(controls)) return null
+      if (startElement.closest('[aria-hidden="true"]') || endElement.closest('[aria-hidden="true"]')) return null
 
-      const row = startElement.closest('[data-chat-flow-kind]')
-      if (!row || row !== endElement.closest('[data-chat-flow-kind]')) return null
-      if (row.closest('[data-chat-running]') || row.hasAttribute('data-chat-running')) return null
+      // Preserve the original completed-chat-row behavior. The Trajectory
+      // view renders outside [data-chat-flow-kind], but inside the same
+      // session's [data-conversation-composer-overlay] and can span records.
+      const chatRow = startElement.closest('[data-chat-flow-kind]')
+      const sameChatRow = chatRow !== null && chatRow === endElement.closest('[data-chat-flow-kind]')
+      const trajectory = startElement.closest('[data-conversation-composer-overlay]')
+      const sameTrajectory = trajectory !== null && trajectory.contains(endElement)
+      if (!sameChatRow && !sameTrajectory) return null
+      if (sameChatRow && (chatRow.closest('[data-chat-running]') || chatRow.hasAttribute('data-chat-running'))) return null
 
-      const conversation = row.closest('[data-conversation-session]')
+      const origin = sameChatRow ? chatRow : trajectory
+      const conversation = origin.closest('[data-conversation-session]')
       const sessionId = conversation?.getAttribute('data-conversation-session') || undefined
       const seat = conversation?.querySelector('[data-composer-seat]')
       const composerId = seat?.getAttribute('data-inline-quote-composer') || undefined
       if (sessionId === undefined || composerId === undefined) return null
 
       const code = codeInfoOf(startElement, endElement)
+      // A selection crossing different Trajectory records must not inherit
+      // kind=code merely because one endpoint happened to be inside <pre>.
+      const sameCodeBlock = startElement.closest('pre, code') !== null
+        && startElement.closest('pre, code') === endElement.closest('pre, code')
+      const kind = sameTrajectory && !sameChatRow && !sameCodeBlock ? 'text' : code.kind
       const text = selectedText(range)
       if (text.trim().length === 0) return null
 
@@ -158,14 +173,16 @@ window.__ModuleLoader__.load({
         text,
         sessionId,
         composerId,
-        kind: code.kind,
-        language: code.language,
+        kind,
+        language: kind === 'code' ? code.language : undefined,
         lines: text.split('\n').length,
-        source: {
-          turn: Number(row.dataset.chatTurn) || undefined,
-          nodeKey: row.dataset.chatNodeKey,
-          rowKind: row.dataset.chatFlowKind,
-        },
+        source: sameChatRow
+          ? {
+              turn: Number(chatRow.dataset.chatTurn) || undefined,
+              nodeKey: chatRow.dataset.chatNodeKey,
+              rowKind: chatRow.dataset.chatFlowKind,
+            }
+          : { view: 'trajectory' },
         rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
       }
     }
